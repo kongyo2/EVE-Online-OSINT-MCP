@@ -1099,6 +1099,7 @@ export {
   resolveNamesToIds,
   resolveIdsToNames,
   getESICharacterInfo,
+  getESICharacterCorporationHistory,
   getESICorporationInfo,
   getESIAllianceInfo,
   getCharacterInfo,
@@ -1106,6 +1107,7 @@ export {
   getAllianceCorps,
   getCharacterKillmails,
   getCharacterStats,
+  server,
 };
 
 // Start server only if not in test environment

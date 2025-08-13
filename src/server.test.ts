@@ -399,11 +399,13 @@ describe("Retry Logic", () => {
       throw new Error("Network error");
     });
 
+    // Use a more controlled approach to handle the promise
     const fetchPromise = fetchWithRetry("https://test.com", {}, 3);
     
     // Fast-forward through all timers
     await vi.runAllTimersAsync();
     
+    // Wait for the promise to settle and expect it to reject
     await expect(fetchPromise).rejects.toThrow("Network error");
     expect(callCount).toBe(3); // Should try 3 times
   });
