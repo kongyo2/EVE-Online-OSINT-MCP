@@ -1,14 +1,26 @@
 # EVE Online OSINT MCP Server
 
-An MCP (Model Context Protocol) server that provides OSINT (Open Source Intelligence) capabilities for EVE Online using the EveWho API. This server allows AI assistants to gather intelligence on EVE Online characters, corporations, and alliances by name.
+An MCP (Model Context Protocol) server that provides OSINT (Open Source Intelligence) capabilities for EVE Online using multiple APIs including ESI, EveWho, and zKillboard. This server allows AI assistants to gather comprehensive intelligence on EVE Online characters, corporations, and alliances by name.
 
 ## Features
 
-- **Character Intelligence**: Get detailed information about EVE Online characters including corporation history, security status, and current affiliations
-- **Corporation Analysis**: Retrieve member lists, activity metrics, and corporation details
-- **Alliance Intelligence**: Analyze alliance composition, member corporations, and growth trends
-- **Name Resolution**: Automatically converts entity names to IDs using EVE Online's ESI API
-- **Rate Limiting Compliance**: Respects EveWho's API rate limits (10 requests per 30 seconds)
+- **Character Intelligence**: Get detailed information about EVE Online characters including:
+  - ESI public character data (birthday, gender, description, security status)
+  - Character portraits in multiple resolutions
+  - Complete corporation history with dates
+  - Current affiliations and titles
+  - zKillboard statistics and recent killmails
+- **Corporation Analysis**: Retrieve comprehensive corporation data including:
+  - ESI corporation information (member count, tax rate, founding date)
+  - EveWho member lists with activity metrics
+  - Alliance affiliations and leadership details
+- **Alliance Intelligence**: Analyze alliance composition including:
+  - ESI alliance information (founding date, ticker, executor corp)
+  - Member corporations with detailed statistics
+  - Growth trends and activity metrics
+- **Name Resolution**: Automatically converts entity names to IDs and vice versa using ESI API
+- **Multi-API Integration**: Combines data from ESI, EveWho, and zKillboard for comprehensive intelligence
+- **Rate Limiting Compliance**: Respects all API rate limits and includes proper error handling
 
 ## Tools Available
 
@@ -22,11 +34,12 @@ Investigates individual EVE Online characters by name.
 
 **Returns:**
 
-- Character ID and basic information
-- Current corporation and alliance
-- Security status
-- Corporation history with dates
-- Last login information (when available)
+- **ESI Character Information**: Birthday, gender, description, security status, title
+- **Character Portraits**: URLs for 64x64, 128x128, 256x256, and 512x512 pixel images
+- **Corporation History**: Complete history from ESI with corporation names and dates
+- **Current Affiliations**: Corporation and alliance information
+- **EveWho Data**: Additional context including last login information
+- **zKillboard Data**: Recent killmails and PvP statistics
 
 ### 2. Corporation OSINT (`corporation-osint`)
 
@@ -38,11 +51,11 @@ Analyzes EVE Online corporations by name.
 
 **Returns:**
 
-- Corporation ID and basic information
-- Total member count and 7-day delta
-- Alliance affiliation (if any)
-- Complete member list with join dates and security status
-- Activity metrics
+- **ESI Corporation Information**: Name, ticker, member count, tax rate, founding date, CEO details
+- **EveWho Statistics**: Total member count, 7-day delta, activity metrics
+- **Alliance Affiliation**: Current alliance information (if applicable)
+- **Member List**: Complete member roster with join dates and security status
+- **Corporate Details**: Description, URL, war eligibility status
 
 ### 3. Alliance OSINT (`alliance-osint`)
 
@@ -54,10 +67,11 @@ Examines EVE Online alliances by name.
 
 **Returns:**
 
-- Alliance ID and basic information
-- Total member count across all corporations
-- List of member corporations with individual statistics
-- Growth trends and activity metrics
+- **ESI Alliance Information**: Name, ticker, founding date, creator and executor corporation details
+- **EveWho Statistics**: Total member count, corporation count, 7-day delta
+- **Member Corporations**: Complete list with individual member counts and activity metrics
+- **Growth Trends**: Historical data and activity patterns
+- **Leadership Information**: Creator and executor corporation details
 
 ## Resources
 
@@ -140,24 +154,37 @@ The server uses stdio transport and can be integrated with any MCP-compatible cl
 
 ## API Dependencies
 
-This server relies on two external APIs:
+This server relies on three external APIs:
 
 1. **EVE Online ESI API** (`https://esi.evetech.net/`)
 
-   - Used for resolving entity names to IDs
-   - No authentication required for name resolution
-   - Official CCP Games API
+   - Official CCP Games API for EVE Online
+   - Provides character, corporation, and alliance public information
+   - Character portraits and corporation history
+   - Name resolution (names ↔ IDs)
+   - No authentication required for public endpoints
+   - Built-in rate limiting
 
 2. **EveWho API** (`https://evewho.com/api/`)
+
    - Provides corporation and alliance membership data
+   - Historical tracking and activity metrics
    - Rate limited to 10 requests per 30 seconds
-   - Third-party service by zKillboard
+   - Third-party service
+
+3. **zKillboard API** (`https://zkillboard.com/api/`)
+   - Killmail and PvP statistics
+   - Character combat history and statistics
+   - Rate limiting: be reasonable with request frequency
+   - Third-party service
 
 ## Rate Limiting
 
-The server respects EveWho's rate limiting policy:
+The server respects all API rate limiting policies:
 
-- Maximum 10 requests per 30-second window
+- **EveWho**: Maximum 10 requests per 30-second window
+- **zKillboard**: Reasonable request frequency, no hammering
+- **ESI**: Built-in rate limiting handled automatically
 - Automatic error handling for rate limit violations
 - User-friendly error messages when limits are exceeded
 

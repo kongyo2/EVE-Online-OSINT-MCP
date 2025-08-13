@@ -20,6 +20,61 @@ const EVEWHO_BASE_URL = "https://evewho.com/api";
 // zKillboard API base URL
 const ZKILLBOARD_BASE_URL = "https://zkillboard.com/api";
 
+interface ESIAllianceInfo {
+  creator_corporation_id: number;
+  creator_id: number;
+  date_founded: string;
+  executor_corporation_id?: number;
+  faction_id?: number;
+  name: string;
+  ticker: string;
+}
+
+interface ESICharacterCorporationHistory {
+  corporation_id: number;
+  is_deleted?: boolean;
+  record_id: number;
+  start_date: string;
+}
+
+interface ESICharacterInfo {
+  alliance_id?: number;
+  birthday: string;
+  bloodline_id: number;
+  corporation_id: number;
+  description?: string;
+  faction_id?: number;
+  gender: string;
+  name: string;
+  race_id: number;
+  security_status?: number;
+  title?: string;
+}
+
+interface ESICharacterPortrait {
+  px128x128?: string;
+  px256x256?: string;
+  px512x512?: string;
+  px64x64?: string;
+}
+
+interface ESICorporationInfo {
+  alliance_id?: number;
+  ceo_id: number;
+  creator_id: number;
+  date_founded?: string;
+  description?: string;
+  faction_id?: number;
+  home_station_id?: number;
+  member_count: number;
+  name: string;
+  shares?: number;
+  tax_rate: number;
+  ticker: string;
+  url?: string;
+  war_eligible?: boolean;
+}
+
 interface ESIResolveResponse {
   alliances?: Array<{ id: number; name: string }>;
   characters?: Array<{ id: number; name: string }>;
@@ -305,6 +360,184 @@ async function getCorporationMembers(
 }
 
 /**
+ * Get alliance information from ESI
+ */
+async function getESIAllianceInfo(
+  allianceId: number,
+): Promise<ESIAllianceInfo> {
+  try {
+    const response = await fetch(`${ESI_BASE_URL}/alliances/${allianceId}/`, {
+      headers: {
+        "User-Agent": "EVE-OSINT-MCP/1.0.0",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `ESI API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as ESIAllianceInfo;
+  } catch (error) {
+    throw new Error(
+      `Failed to get ESI alliance info: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Get character corporation history from ESI
+ */
+async function getESICharacterCorporationHistory(
+  characterId: number,
+): Promise<ESICharacterCorporationHistory[]> {
+  try {
+    const response = await fetch(
+      `${ESI_BASE_URL}/characters/${characterId}/corporationhistory/`,
+      {
+        headers: {
+          "User-Agent": "EVE-OSINT-MCP/1.0.0",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `ESI API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as ESICharacterCorporationHistory[];
+  } catch (error) {
+    throw new Error(
+      `Failed to get ESI character corporation history: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Get character public information from ESI
+ */
+async function getESICharacterInfo(
+  characterId: number,
+): Promise<ESICharacterInfo> {
+  try {
+    const response = await fetch(`${ESI_BASE_URL}/characters/${characterId}/`, {
+      headers: {
+        "User-Agent": "EVE-OSINT-MCP/1.0.0",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `ESI API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as ESICharacterInfo;
+  } catch (error) {
+    throw new Error(
+      `Failed to get ESI character info: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Get character portrait URLs from ESI
+ */
+async function getESICharacterPortrait(
+  characterId: number,
+): Promise<ESICharacterPortrait> {
+  try {
+    const response = await fetch(
+      `${ESI_BASE_URL}/characters/${characterId}/portrait/`,
+      {
+        headers: {
+          "User-Agent": "EVE-OSINT-MCP/1.0.0",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `ESI API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as ESICharacterPortrait;
+  } catch (error) {
+    throw new Error(
+      `Failed to get ESI character portrait: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Get corporation information from ESI
+ */
+async function getESICorporationInfo(
+  corporationId: number,
+): Promise<ESICorporationInfo> {
+  try {
+    const response = await fetch(
+      `${ESI_BASE_URL}/corporations/${corporationId}/`,
+      {
+        headers: {
+          "User-Agent": "EVE-OSINT-MCP/1.0.0",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `ESI API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as ESICorporationInfo;
+  } catch (error) {
+    throw new Error(
+      `Failed to get ESI corporation info: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Resolve IDs to names using ESI
+ */
+async function resolveIdsToNames(
+  ids: number[],
+): Promise<Array<{ category: string; id: number; name: string }>> {
+  try {
+    const response = await fetch(`${ESI_BASE_URL}/universe/names/`, {
+      body: JSON.stringify(ids),
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "EVE-OSINT-MCP/1.0.0",
+      },
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      throw new Error(
+        `ESI API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as Array<{
+      category: string;
+      id: number;
+      name: string;
+    }>;
+  } catch (error) {
+    throw new Error(
+      `Failed to resolve IDs to names: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
  * Resolve entity names to IDs using ESI
  */
 async function resolveNamesToIds(names: string[]): Promise<ESIResolveResponse> {
@@ -360,12 +593,22 @@ server.addTool({
         name: character.name,
       });
 
-      // Get character information from EveWho
-      const characterInfo = await getCharacterInfo(character.id);
-
-      // Get zKillboard data
-      log.info("Fetching zKillboard data", { characterId: character.id });
-      const [killmails, zkbStats] = await Promise.allSettled([
+      // Get character information from multiple sources
+      log.info("Fetching character data from multiple sources", {
+        characterId: character.id,
+      });
+      const [
+        esiCharacterInfo,
+        esiPortrait,
+        esiCorpHistory,
+        eveWhoInfo,
+        killmails,
+        zkbStats,
+      ] = await Promise.allSettled([
+        getESICharacterInfo(character.id),
+        getESICharacterPortrait(character.id),
+        getESICharacterCorporationHistory(character.id),
+        getCharacterInfo(character.id),
         getCharacterKillmails(character.id),
         getCharacterStats(character.id),
       ]);
@@ -374,29 +617,97 @@ server.addTool({
       result += `**Character ID:** ${character.id}\n`;
       result += `**Character Name:** ${character.name}\n\n`;
 
-      if (characterInfo) {
-        result += `## Current Status\n`;
-        if (characterInfo.corporation) {
-          result += `**Corporation:** ${characterInfo.corporation.name} (ID: ${characterInfo.corporation.corporation_id})\n`;
+      // ESI Character Information
+      if (esiCharacterInfo.status === "fulfilled") {
+        const esiInfo = esiCharacterInfo.value;
+        result += `## ESI Character Information\n`;
+        result += `**Birthday:** ${esiInfo.birthday}\n`;
+        result += `**Gender:** ${esiInfo.gender}\n`;
+        result += `**Corporation ID:** ${esiInfo.corporation_id}\n`;
+        if (esiInfo.alliance_id) {
+          result += `**Alliance ID:** ${esiInfo.alliance_id}\n`;
         }
-        if (characterInfo.alliance) {
-          result += `**Alliance:** ${characterInfo.alliance.name} (ID: ${characterInfo.alliance.alliance_id})\n`;
+        if (esiInfo.security_status !== undefined) {
+          result += `**Security Status:** ${esiInfo.security_status.toFixed(2)}\n`;
         }
-        if (characterInfo.security_status !== undefined) {
-          result += `**Security Status:** ${characterInfo.security_status.toFixed(2)}\n`;
+        if (esiInfo.description) {
+          result += `**Description:** ${esiInfo.description}\n`;
         }
-        if (characterInfo.last_login) {
-          result += `**Last Login:** ${characterInfo.last_login}\n`;
+        if (esiInfo.title) {
+          result += `**Title:** ${esiInfo.title}\n`;
         }
+        result += `\n`;
+      }
 
-        result += `\n## Corporation History\n`;
-        if (characterInfo.history && characterInfo.history.length > 0) {
-          characterInfo.history.forEach((entry, index: number) => {
-            result += `${index + 1}. **${entry.corporation.name}** (${entry.start_date}${entry.end_date ? ` - ${entry.end_date}` : " - Present"})\n`;
-          });
+      // Character Portrait
+      if (esiPortrait.status === "fulfilled") {
+        const portrait = esiPortrait.value;
+        result += `## Character Portrait\n`;
+        if (portrait.px64x64) result += `**64x64:** ${portrait.px64x64}\n`;
+        if (portrait.px128x128)
+          result += `**128x128:** ${portrait.px128x128}\n`;
+        if (portrait.px256x256)
+          result += `**256x256:** ${portrait.px256x256}\n`;
+        if (portrait.px512x512)
+          result += `**512x512:** ${portrait.px512x512}\n`;
+        result += `\n`;
+      }
+
+      // ESI Corporation History
+      if (esiCorpHistory.status === "fulfilled") {
+        const corpHistory = esiCorpHistory.value;
+        result += `## Corporation History (ESI)\n`;
+        if (corpHistory.length > 0) {
+          // Get corporation names for the history
+          const corpIds = [
+            ...new Set(corpHistory.map((entry) => entry.corporation_id)),
+          ];
+          try {
+            const corpNames = await resolveIdsToNames(corpIds);
+            const corpNameMap = new Map(
+              corpNames.map((corp) => [corp.id, corp.name]),
+            );
+
+            corpHistory.forEach((entry, index: number) => {
+              const corpName =
+                corpNameMap.get(entry.corporation_id) ||
+                `Unknown (${entry.corporation_id})`;
+              result += `${index + 1}. **${corpName}** (ID: ${entry.corporation_id}) - Started: ${entry.start_date}`;
+              if (entry.is_deleted) {
+                result += ` [DELETED]`;
+              }
+              result += `\n`;
+            });
+          } catch {
+            // Fallback to showing IDs only
+            corpHistory.forEach((entry, index: number) => {
+              result += `${index + 1}. **Corporation ID: ${entry.corporation_id}** - Started: ${entry.start_date}`;
+              if (entry.is_deleted) {
+                result += ` [DELETED]`;
+              }
+              result += `\n`;
+            });
+          }
         } else {
           result += "No corporation history available.\n";
         }
+        result += `\n`;
+      }
+
+      // EveWho Information (for additional context)
+      if (eveWhoInfo.status === "fulfilled") {
+        const eveWhoData = eveWhoInfo.value;
+        result += `## EveWho Additional Information\n`;
+        if (eveWhoData.corporation) {
+          result += `**Corporation:** ${eveWhoData.corporation.name} (ID: ${eveWhoData.corporation.corporation_id})\n`;
+        }
+        if (eveWhoData.alliance) {
+          result += `**Alliance:** ${eveWhoData.alliance.name} (ID: ${eveWhoData.alliance.alliance_id})\n`;
+        }
+        if (eveWhoData.last_login) {
+          result += `**Last Login:** ${eveWhoData.last_login}\n`;
+        }
+        result += `\n`;
       }
 
       // Add zKillboard statistics
@@ -466,17 +777,53 @@ server.addTool({
         name: corporation.name,
       });
 
-      // Get corporation member list from EveWho
-      const corpData = await getCorporationMembers(corporation.id);
+      // Get corporation information from multiple sources
+      log.info("Fetching corporation data from multiple sources", {
+        corporationId: corporation.id,
+      });
+      const [esiCorpInfo, eveWhoCorpData] = await Promise.allSettled([
+        getESICorporationInfo(corporation.id),
+        getCorporationMembers(corporation.id),
+      ]);
 
       let result = `# Corporation OSINT Report: ${corporation.name}\n\n`;
       result += `**Corporation ID:** ${corporation.id}\n`;
       result += `**Corporation Name:** ${corporation.name}\n\n`;
 
-      if (corpData) {
-        result += `## Corporation Statistics\n`;
+      // ESI Corporation Information
+      if (esiCorpInfo.status === "fulfilled") {
+        const esiInfo = esiCorpInfo.value;
+        result += `## ESI Corporation Information\n`;
+        result += `**Name:** ${esiInfo.name}\n`;
+        result += `**Ticker:** ${esiInfo.ticker}\n`;
+        result += `**Member Count:** ${esiInfo.member_count}\n`;
+        result += `**Tax Rate:** ${(esiInfo.tax_rate * 100).toFixed(1)}%\n`;
+        if (esiInfo.date_founded) {
+          result += `**Founded:** ${esiInfo.date_founded}\n`;
+        }
+        if (esiInfo.alliance_id) {
+          result += `**Alliance ID:** ${esiInfo.alliance_id}\n`;
+        }
+        result += `**CEO ID:** ${esiInfo.ceo_id}\n`;
+        result += `**Creator ID:** ${esiInfo.creator_id}\n`;
+        if (esiInfo.description) {
+          result += `**Description:** ${esiInfo.description}\n`;
+        }
+        if (esiInfo.url) {
+          result += `**URL:** ${esiInfo.url}\n`;
+        }
+        if (esiInfo.war_eligible !== undefined) {
+          result += `**War Eligible:** ${esiInfo.war_eligible ? "Yes" : "No"}\n`;
+        }
+        result += `\n`;
+      }
+
+      // EveWho Corporation Data
+      if (eveWhoCorpData.status === "fulfilled") {
+        const corpData = eveWhoCorpData.value;
+        result += `## EveWho Corporation Statistics\n`;
         if (corpData.memberCount !== undefined) {
-          result += `**Total Members:** ${corpData.memberCount}\n`;
+          result += `**Total Members (EveWho):** ${corpData.memberCount}\n`;
         }
         if (corpData.delta !== undefined) {
           result += `**7-Day Delta:** ${corpData.delta > 0 ? "+" : ""}${corpData.delta}\n`;
@@ -485,7 +832,7 @@ server.addTool({
           result += `**Alliance:** ${corpData.alliance.name} (ID: ${corpData.alliance.alliance_id})\n`;
         }
 
-        result += `\n## Member List\n`;
+        result += `\n## Member List (EveWho)\n`;
         if (corpData.characters && corpData.characters.length > 0) {
           result += `Showing ${Math.min(corpData.characters.length, 50)} members:\n\n`;
           corpData.characters.slice(0, 50).forEach((member, index: number) => {
@@ -550,15 +897,41 @@ server.addTool({
       const alliance = resolved.alliances[0];
       log.info("Alliance resolved", { id: alliance.id, name: alliance.name });
 
-      // Get alliance corporation list from EveWho
-      const allianceData = await getAllianceCorps(alliance.id);
+      // Get alliance information from multiple sources
+      log.info("Fetching alliance data from multiple sources", {
+        allianceId: alliance.id,
+      });
+      const [esiAllianceInfo, eveWhoAllianceData] = await Promise.allSettled([
+        getESIAllianceInfo(alliance.id),
+        getAllianceCorps(alliance.id),
+      ]);
 
       let result = `# Alliance OSINT Report: ${alliance.name}\n\n`;
       result += `**Alliance ID:** ${alliance.id}\n`;
       result += `**Alliance Name:** ${alliance.name}\n\n`;
 
-      if (allianceData) {
-        result += `## Alliance Statistics\n`;
+      // ESI Alliance Information
+      if (esiAllianceInfo.status === "fulfilled") {
+        const esiInfo = esiAllianceInfo.value;
+        result += `## ESI Alliance Information\n`;
+        result += `**Name:** ${esiInfo.name}\n`;
+        result += `**Ticker:** ${esiInfo.ticker}\n`;
+        result += `**Founded:** ${esiInfo.date_founded}\n`;
+        result += `**Creator Corporation ID:** ${esiInfo.creator_corporation_id}\n`;
+        result += `**Creator ID:** ${esiInfo.creator_id}\n`;
+        if (esiInfo.executor_corporation_id) {
+          result += `**Executor Corporation ID:** ${esiInfo.executor_corporation_id}\n`;
+        }
+        if (esiInfo.faction_id) {
+          result += `**Faction ID:** ${esiInfo.faction_id}\n`;
+        }
+        result += `\n`;
+      }
+
+      // EveWho Alliance Data
+      if (eveWhoAllianceData.status === "fulfilled") {
+        const allianceData = eveWhoAllianceData.value;
+        result += `## EveWho Alliance Statistics\n`;
         if (allianceData.memberCount !== undefined) {
           result += `**Total Members:** ${allianceData.memberCount}\n`;
         }
@@ -650,10 +1023,23 @@ zKillboard provides killmail and PvP statistics for EVE Online entities.
 
 ## ESI API
 
-EVE Swagger Interface (ESI) is used for name resolution and basic entity information.
+EVE Swagger Interface (ESI) is the official API for EVE Online, providing access to public game data.
 
 ### Endpoints Used
 - **Name Resolution**: \`https://esi.evetech.net/latest/universe/ids/\`
+- **ID to Name Resolution**: \`https://esi.evetech.net/latest/universe/names/\`
+- **Character Public Info**: \`https://esi.evetech.net/latest/characters/{character_id}/\`
+- **Character Portrait**: \`https://esi.evetech.net/latest/characters/{character_id}/portrait/\`
+- **Character Affiliation**: \`https://esi.evetech.net/latest/characters/affiliation/\`
+- **Character Corporation History**: \`https://esi.evetech.net/latest/characters/{character_id}/corporationhistory/\`
+- **Corporation Info**: \`https://esi.evetech.net/latest/corporations/{corporation_id}/\`
+- **Alliance Info**: \`https://esi.evetech.net/latest/alliances/{alliance_id}/\`
+
+### Authentication
+All endpoints used in this MCP server are **public and require no authentication**. They provide access to publicly available information only.
+
+### Rate Limiting
+ESI has built-in rate limiting. The server respects these limits and includes appropriate error handling.
 
 ## Data Sources
 
