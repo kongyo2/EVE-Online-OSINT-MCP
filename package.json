@@ -19,10 +19,10 @@
     "evewho"
   ],
   "repository": {
-    "url": "https://github.com/your-username/eve-online-osint-mcp"
+    "url": "https://github.com/kongyo2/eve-online-osint-mcp"
   },
-  "author": "Your Name <your.email@example.com>",
-  "homepage": "https://github.com/your-username/eve-online-osint-mcp",
+  "author": "kongyo2",
+  "homepage": "https://github.com/kongyo2/eve-online-osint-mcp",
   "type": "module",
   "license": "MIT",
   "description": "EVE Online OSINT MCP Server using EveWho API for intelligence gathering",
