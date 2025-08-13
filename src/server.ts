@@ -17,6 +17,8 @@ const server = new FastMCP({
 const ESI_BASE_URL = "https://esi.evetech.net/latest";
 // EveWho API base URL
 const EVEWHO_BASE_URL = "https://evewho.com/api";
+// zKillboard API base URL
+const ZKILLBOARD_BASE_URL = "https://zkillboard.com/api";
 
 interface ESIResolveResponse {
   alliances?: Array<{ id: number; name: string }>;
@@ -72,6 +74,86 @@ interface EveWhoCorporationResponse {
   memberCount?: number;
 }
 
+interface ZKillboardKillmail {
+  attackers: Array<{
+    alliance_id?: number;
+    character_id?: number;
+    corporation_id?: number;
+    damage_done: number;
+    faction_id?: number;
+    final_blow: boolean;
+    security_status: number;
+    ship_type_id?: number;
+    weapon_type_id?: number;
+  }>;
+  killmail_id: number;
+  killmail_time: string;
+  solar_system_id: number;
+  victim: {
+    alliance_id?: number;
+    character_id?: number;
+    corporation_id: number;
+    damage_taken: number;
+    faction_id?: number;
+    items?: Array<{
+      flag: number;
+      item_type_id: number;
+      quantity_destroyed?: number;
+      quantity_dropped?: number;
+      singleton: number;
+    }>;
+    position: {
+      x: number;
+      y: number;
+      z: number;
+    };
+    ship_type_id: number;
+  };
+  zkb: {
+    awox: boolean;
+    destroyedValue: number;
+    droppedValue: number;
+    fittedValue: number;
+    hash: string;
+    href: string;
+    locationID: number;
+    npc: boolean;
+    points: number;
+    solo: boolean;
+    totalValue: number;
+  };
+}
+
+interface ZKillboardStats {
+  allTimeSum: number;
+  groups: Record<string, ZKillboardStatsEntry>;
+  id: number;
+  info?: {
+    id: number;
+    name: string;
+    type: string;
+  };
+  months: Record<string, ZKillboardStatsEntry>;
+  topAllTime: Array<{
+    id: number;
+    isk: number;
+    kills: number;
+    type: string;
+  }>;
+  topIsk: Array<{
+    id: number;
+    isk: number;
+    kills: number;
+    type: string;
+  }>;
+  type: string;
+}
+
+interface ZKillboardStatsEntry {
+  isk: number;
+  kills: number;
+}
+
 /**
  * Get alliance member corporations from EveWho
  */
@@ -125,6 +207,69 @@ async function getCharacterInfo(
   } catch (error) {
     throw new Error(
       `Failed to get character info: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Get character killmails from zKillboard (latest 20)
+ */
+async function getCharacterKillmails(
+  characterId: number,
+): Promise<ZKillboardKillmail[]> {
+  try {
+    const response = await fetch(
+      `${ZKILLBOARD_BASE_URL}/characterID/${characterId}/`,
+      {
+        headers: {
+          "Accept-Encoding": "gzip",
+          "User-Agent": "EVE-OSINT-MCP/1.0.0 Maintainer: eve-osint@example.com",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `zKillboard API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    const killmails = (await response.json()) as ZKillboardKillmail[];
+    return killmails.slice(0, 20); // Return latest 20 killmails
+  } catch (error) {
+    throw new Error(
+      `Failed to get character killmails: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
+/**
+ * Get character statistics from zKillboard
+ */
+async function getCharacterStats(
+  characterId: number,
+): Promise<ZKillboardStats> {
+  try {
+    const response = await fetch(
+      `${ZKILLBOARD_BASE_URL}/stats/characterID/${characterId}/`,
+      {
+        headers: {
+          "Accept-Encoding": "gzip",
+          "User-Agent": "EVE-OSINT-MCP/1.0.0 Maintainer: eve-osint@example.com",
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `zKillboard API error: ${response.status} ${response.statusText}`,
+      );
+    }
+
+    return (await response.json()) as ZKillboardStats;
+  } catch (error) {
+    throw new Error(
+      `Failed to get character stats: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 }
@@ -218,6 +363,13 @@ server.addTool({
       // Get character information from EveWho
       const characterInfo = await getCharacterInfo(character.id);
 
+      // Get zKillboard data
+      log.info("Fetching zKillboard data", { characterId: character.id });
+      const [killmails, zkbStats] = await Promise.allSettled([
+        getCharacterKillmails(character.id),
+        getCharacterStats(character.id),
+      ]);
+
       let result = `# Character OSINT Report: ${character.name}\n\n`;
       result += `**Character ID:** ${character.id}\n`;
       result += `**Character Name:** ${character.name}\n\n`;
@@ -247,7 +399,28 @@ server.addTool({
         }
       }
 
-      result += `\n---\n*Data provided by EveWho API*`;
+      // Add zKillboard statistics
+      if (zkbStats.status === "fulfilled") {
+        result += `\n## zKillboard Statistics (Raw Data)\n`;
+        result += `\`\`\`json\n${JSON.stringify(zkbStats.value, null, 2)}\n\`\`\`\n`;
+      } else {
+        result += `\n## zKillboard Statistics\n`;
+        result += `Error fetching statistics: ${zkbStats.reason}\n`;
+      }
+
+      // Add recent killmails
+      if (killmails.status === "fulfilled" && killmails.value.length > 0) {
+        result += `\n## Recent Killmails (Latest 20 - Raw Data)\n`;
+        result += `\`\`\`json\n${JSON.stringify(killmails.value, null, 2)}\n\`\`\`\n`;
+      } else if (killmails.status === "fulfilled") {
+        result += `\n## Recent Killmails\n`;
+        result += `No recent killmails found.\n`;
+      } else {
+        result += `\n## Recent Killmails\n`;
+        result += `Error fetching killmails: ${killmails.reason}\n`;
+      }
+
+      result += `\n---\n*Data provided by EveWho API and zKillboard API*`;
 
       return result;
     } catch (error) {
@@ -437,35 +610,60 @@ server.addTool({
 server.addResource({
   async load() {
     return {
-      text: `# EveWho API Information
+      text: `# API Information
+
+This MCP server uses multiple APIs to provide comprehensive OSINT data for EVE Online entities.
+
+## EveWho API
 
 EveWho is a service that allows you to view the members of EVE Online corporations and alliances, information that is not available within the game itself.
 
-## API Endpoints Used
-
+### Endpoints Used
 - **Character Info**: \`https://evewho.com/api/character/{character_id}\`
 - **Corporation Members**: \`https://evewho.com/api/corplist/{corporation_id}\`
 - **Alliance Corporations**: \`https://evewho.com/api/allilist/{alliance_id}\`
 
-## Rate Limiting
-
+### Rate Limiting
 EveWho has a rate limit of 10 requests within a 30-second time period. Exceeding this limit will result in temporary blocking.
+
+### Delta Explanation
+Delta represents the change in member count from 7 days ago. A positive delta indicates growth, while a negative delta indicates a decrease in membership.
+
+## zKillboard API
+
+zKillboard provides killmail and PvP statistics for EVE Online entities.
+
+### Endpoints Used
+- **Character Killmails**: \`https://zkillboard.com/api/characterID/{character_id}/\`
+- **Character Statistics**: \`https://zkillboard.com/api/stats/characterID/{character_id}/\`
+
+### Rate Limiting
+- Do not hammer the server with API requests
+- Space out multiple requests as much as possible
+- Maximum of 1000 killmails per request
+- Be reasonable with request frequency
+
+### Data Format
+- All killmail data is returned in raw JSON format
+- Statistics include all-time totals, monthly breakdowns, and top kills
+- Killmails include full victim, attacker, and item information
+
+## ESI API
+
+EVE Swagger Interface (ESI) is used for name resolution and basic entity information.
+
+### Endpoints Used
+- **Name Resolution**: \`https://esi.evetech.net/latest/universe/ids/\`
 
 ## Data Sources
 
-- Character, corporation, and alliance names are resolved to IDs using EVE Online's ESI API
-- Member and activity data comes from EveWho's database
-- All data is within CCP Games' Terms of Service
-
-## Delta Explanation
-
-Delta represents the change in member count from 7 days ago. A positive delta indicates growth, while a negative delta indicates a decrease in membership.
+All data is within CCP Games' Terms of Service and uses publicly available information.
 `,
     };
   },
   mimeType: "text/markdown",
-  name: "EveWho API Information",
-  uri: "evewho://api-info",
+  name: "API Information",
+  uri: "api://info",
 });
 
 server.addPrompt({

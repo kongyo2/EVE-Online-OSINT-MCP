@@ -42,6 +42,84 @@ global.fetch = async (input: Request | string | URL) => {
     } as Response;
   }
 
+  if (url.includes("zkillboard.com/api/characterID/123456789")) {
+    // Mock zKillboard killmails response
+    return {
+      json: async () => [
+        {
+          attackers: [
+            {
+              character_id: 987654321,
+              corporation_id: 123456789,
+              damage_done: 1500,
+              final_blow: true,
+              security_status: 0.5,
+              ship_type_id: 587,
+            },
+          ],
+          killmail_id: 123456789,
+          killmail_time: "2024-01-15T12:30:00Z",
+          solar_system_id: 30000142,
+          victim: {
+            character_id: 123456789,
+            corporation_id: 987654321,
+            damage_taken: 1500,
+            ship_type_id: 588,
+          },
+          zkb: {
+            destroyedValue: 50000000,
+            droppedValue: 25000000,
+            fittedValue: 75000000,
+            hash: "abc123def456",
+            href: "https://zkillboard.com/kill/123456789/",
+            locationID: 40000001,
+            npc: false,
+            points: 1,
+            solo: true,
+            totalValue: 75000000,
+          },
+        },
+      ],
+      ok: true,
+    } as Response;
+  }
+
+  if (url.includes("zkillboard.com/api/stats/characterID/123456789")) {
+    // Mock zKillboard stats response
+    return {
+      json: async () => ({
+        allTimeSum: 150,
+        groups: {
+          "25": { isk: 5000000000, kills: 50 },
+          "26": { isk: 3000000000, kills: 30 },
+        },
+        id: 123456789,
+        months: {
+          "202312": { isk: 2000000000, kills: 20 },
+          "202401": { isk: 2500000000, kills: 25 },
+        },
+        topAllTime: [
+          {
+            id: 587,
+            isk: 1000000000,
+            kills: 10,
+            type: "shipTypeID",
+          },
+        ],
+        topIsk: [
+          {
+            id: 588,
+            isk: 2000000000,
+            kills: 5,
+            type: "shipTypeID",
+          },
+        ],
+        type: "characterID",
+      }),
+      ok: true,
+    } as Response;
+  }
+
   // Default to error response for invalid URLs
   return {
     ok: false,
@@ -78,6 +156,37 @@ describe("EVE Online OSINT Server", () => {
     };
     expect(data.character_id).toBe(123456789);
     expect(data.name).toBe("Test Character");
+  });
+
+  it("should fetch zKillboard killmails", async () => {
+    const response = await fetch(
+      "https://zkillboard.com/api/characterID/123456789/",
+    );
+
+    expect(response.ok).toBe(true);
+    const data = (await response.json()) as Array<{
+      killmail_id: number;
+      zkb: { totalValue: number };
+    }>;
+    expect(Array.isArray(data)).toBe(true);
+    expect(data[0].killmail_id).toBe(123456789);
+    expect(data[0].zkb.totalValue).toBe(75000000);
+  });
+
+  it("should fetch zKillboard statistics", async () => {
+    const response = await fetch(
+      "https://zkillboard.com/api/stats/characterID/123456789/",
+    );
+
+    expect(response.ok).toBe(true);
+    const data = (await response.json()) as {
+      allTimeSum: number;
+      id: number;
+      type: string;
+    };
+    expect(data.id).toBe(123456789);
+    expect(data.type).toBe("characterID");
+    expect(data.allTimeSum).toBe(150);
   });
 
   it("should handle API errors gracefully", async () => {
