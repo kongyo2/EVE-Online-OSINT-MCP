@@ -6,7 +6,6 @@ An MCP (Model Context Protocol) server that provides OSINT (Open Source Intellig
 
 - **Character Intelligence**: Get detailed information about EVE Online characters including:
   - ESI public character data (birthday, gender, description, security status)
-  - Character portraits in multiple resolutions
   - Complete corporation history with dates
   - Current affiliations and titles
   - zKillboard statistics and recent killmails
@@ -35,7 +34,6 @@ Investigates individual EVE Online characters by name.
 **Returns:**
 
 - **ESI Character Information**: Birthday, gender, description, security status, title
-- **Character Portraits**: URLs for 64x64, 128x128, 256x256, and 512x512 pixel images
 - **Corporation History**: Complete history from ESI with corporation names and dates
 - **Current Affiliations**: Corporation and alliance information
 - **EveWho Data**: Additional context including last login information
@@ -160,7 +158,7 @@ This server relies on three external APIs:
 
    - Official CCP Games API for EVE Online
    - Provides character, corporation, and alliance public information
-   - Character portraits and corporation history
+   - Corporation history and public character data
    - Name resolution (names ↔ IDs)
    - No authentication required for public endpoints
    - Built-in rate limiting

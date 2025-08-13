@@ -51,13 +51,6 @@ interface ESICharacterInfo {
   title?: string;
 }
 
-interface ESICharacterPortrait {
-  px128x128?: string;
-  px256x256?: string;
-  px512x512?: string;
-  px64x64?: string;
-}
-
 interface ESICorporationInfo {
   alliance_id?: number;
   ceo_id: number;
@@ -443,35 +436,7 @@ async function getESICharacterInfo(
   }
 }
 
-/**
- * Get character portrait URLs from ESI
- */
-async function getESICharacterPortrait(
-  characterId: number,
-): Promise<ESICharacterPortrait> {
-  try {
-    const response = await fetch(
-      `${ESI_BASE_URL}/characters/${characterId}/portrait/`,
-      {
-        headers: {
-          "User-Agent": "EVE-OSINT-MCP/1.0.0",
-        },
-      },
-    );
 
-    if (!response.ok) {
-      throw new Error(
-        `ESI API error: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    return (await response.json()) as ESICharacterPortrait;
-  } catch (error) {
-    throw new Error(
-      `Failed to get ESI character portrait: ${error instanceof Error ? error.message : String(error)}`,
-    );
-  }
-}
 
 /**
  * Get corporation information from ESI
@@ -599,14 +564,12 @@ server.addTool({
       });
       const [
         esiCharacterInfo,
-        esiPortrait,
         esiCorpHistory,
         eveWhoInfo,
         killmails,
         zkbStats,
       ] = await Promise.allSettled([
         getESICharacterInfo(character.id),
-        getESICharacterPortrait(character.id),
         getESICharacterCorporationHistory(character.id),
         getCharacterInfo(character.id),
         getCharacterKillmails(character.id),
@@ -639,19 +602,7 @@ server.addTool({
         result += `\n`;
       }
 
-      // Character Portrait
-      if (esiPortrait.status === "fulfilled") {
-        const portrait = esiPortrait.value;
-        result += `## Character Portrait\n`;
-        if (portrait.px64x64) result += `**64x64:** ${portrait.px64x64}\n`;
-        if (portrait.px128x128)
-          result += `**128x128:** ${portrait.px128x128}\n`;
-        if (portrait.px256x256)
-          result += `**256x256:** ${portrait.px256x256}\n`;
-        if (portrait.px512x512)
-          result += `**512x512:** ${portrait.px512x512}\n`;
-        result += `\n`;
-      }
+
 
       // ESI Corporation History
       if (esiCorpHistory.status === "fulfilled") {

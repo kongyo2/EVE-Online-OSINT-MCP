@@ -329,28 +329,6 @@ describe("EVE Online OSINT Server", () => {
     expect(data.security_status).toBe(-2.5);
   });
 
-  it("should fetch ESI character portrait", async () => {
-    const response = await fetch(
-      "https://esi.evetech.net/latest/characters/123456789/portrait/",
-    );
-
-    expect(response.ok).toBe(true);
-    const data = (await response.json()) as {
-      px128x128: string;
-      px256x256: string;
-      px512x512: string;
-      px64x64: string;
-    };
-    expect(data.px64x64).toBeDefined();
-    expect(data.px128x128).toBeDefined();
-    expect(data.px256x256).toBeDefined();
-    expect(data.px512x512).toBeDefined();
-    expect(data.px64x64).toContain("portrait?size=64");
-    expect(data.px128x128).toContain("portrait?size=128");
-    expect(data.px256x256).toContain("portrait?size=256");
-    expect(data.px512x512).toContain("portrait?size=512");
-  });
-
   it("should fetch ESI character corporation history", async () => {
     const response = await fetch(
       "https://esi.evetech.net/latest/characters/123456789/corporationhistory/",
