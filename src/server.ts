@@ -9,24 +9,36 @@ async function fetchWithRetry(
   options: RequestInit,
   maxRetries = 5,
 ): Promise<Response> {
+  let lastError: Error | undefined;
+
   for (let i = 0; i < maxRetries; i++) {
     try {
       const response = await fetch(url, options);
-      // 5xx server errors are worth retrying
-      if (response.status >= 500 && response.status < 600) {
+
+      // Retry on server errors (5xx), rate limiting (429), and timeout (408)
+      const shouldRetry =
+        response.status >= 500 ||
+        response.status === 429 ||
+        response.status === 408;
+
+      if (shouldRetry) {
         if (i === maxRetries - 1) return response; // Return last attempt
         const delay = Math.pow(2, i) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
         await sleep(delay);
         continue;
       }
-      return response; // Not a 5xx, return response
+
+      return response; // Success or non-retryable error
     } catch (error) {
-      if (i === maxRetries - 1) throw error; // Rethrow last attempt's error
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (i === maxRetries - 1) throw lastError; // Rethrow last attempt's error
       const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
       await sleep(delay);
     }
   }
-  throw new Error(`Request failed after ${maxRetries} retries.`);
+
+  // This should never be reached, but TypeScript requires it
+  throw lastError || new Error(`Request failed after ${maxRetries} retries.`);
 }
 
 /**
@@ -1081,6 +1093,24 @@ server.addPrompt({
   name: "eve-osint-report",
 });
 
-server.start({
-  transportType: "stdio",
-});
+// Export functions for testing
+export {
+  fetchWithRetry,
+  resolveNamesToIds,
+  resolveIdsToNames,
+  getESICharacterInfo,
+  getESICorporationInfo,
+  getESIAllianceInfo,
+  getCharacterInfo,
+  getCorporationMembers,
+  getAllianceCorps,
+  getCharacterKillmails,
+  getCharacterStats,
+};
+
+// Start server only if not in test environment
+if (process.env.NODE_ENV !== "test") {
+  server.start({
+    transportType: "stdio",
+  });
+}
