@@ -1,74 +1,186 @@
-# FastMCP Boilerplate
+# EVE Online OSINT MCP Server
 
-A boilerplate for [FastMCP](https://github.com/punkpeye/fastmcp).
+An MCP (Model Context Protocol) server that provides OSINT (Open Source Intelligence) capabilities for EVE Online using the EveWho API. This server allows AI assistants to gather intelligence on EVE Online characters, corporations, and alliances by name.
 
-This boilerplate is a good starting point for building an MCP server. It includes a basic setup for testing, linting, formatting, and publishing to NPM.
+## Features
+
+- **Character Intelligence**: Get detailed information about EVE Online characters including corporation history, security status, and current affiliations
+- **Corporation Analysis**: Retrieve member lists, activity metrics, and corporation details
+- **Alliance Intelligence**: Analyze alliance composition, member corporations, and growth trends
+- **Name Resolution**: Automatically converts entity names to IDs using EVE Online's ESI API
+- **Rate Limiting Compliance**: Respects EveWho's API rate limits (10 requests per 30 seconds)
+
+## Tools Available
+
+### 1. Character OSINT (`character-osint`)
+
+Investigates individual EVE Online characters by name.
+
+**Parameters:**
+
+- `characterName` (string): The exact name of the character to investigate
+
+**Returns:**
+
+- Character ID and basic information
+- Current corporation and alliance
+- Security status
+- Corporation history with dates
+- Last login information (when available)
+
+### 2. Corporation OSINT (`corporation-osint`)
+
+Analyzes EVE Online corporations by name.
+
+**Parameters:**
+
+- `corporationName` (string): The exact name of the corporation to investigate
+
+**Returns:**
+
+- Corporation ID and basic information
+- Total member count and 7-day delta
+- Alliance affiliation (if any)
+- Complete member list with join dates and security status
+- Activity metrics
+
+### 3. Alliance OSINT (`alliance-osint`)
+
+Examines EVE Online alliances by name.
+
+**Parameters:**
+
+- `allianceName` (string): The exact name of the alliance to investigate
+
+**Returns:**
+
+- Alliance ID and basic information
+- Total member count across all corporations
+- List of member corporations with individual statistics
+- Growth trends and activity metrics
+
+## Resources
+
+- **EveWho API Information**: Documentation about the EveWho API, rate limits, and data sources
+
+## Prompts
+
+- **EVE OSINT Report**: Generate comprehensive intelligence reports with customizable focus areas (membership, activity, history, connections)
 
 ## Development
 
-To get started, clone the repository and install the dependencies.
+### Prerequisites
+
+- Node.js 18+
+- npm or pnpm
+
+### Installation
 
 ```bash
-git clone https://github.com/punkpeye/fastmcp-boilerplate.git
-cd fastmcp-boilerplate
+git clone https://github.com/your-username/eve-online-osint-mcp.git
+cd eve-online-osint-mcp
 npm install
+```
+
+### Development Mode
+
+Start the server in development mode with interactive CLI:
+
+```bash
 npm run dev
 ```
 
-> [!NOTE]
-> If you are starting a new project, you may want to fork [fastmcp-boilerplate](https://github.com/punkpeye/fastmcp-boilerplate) and start from there.
+### Production Mode
 
-### Start the server
-
-If you simply want to start the server, you can use the `start` script.
+Start the server for production use:
 
 ```bash
 npm run start
 ```
 
-However, you can also interact with the server using the `dev` script.
-
-```bash
-npm run dev
-```
-
-This will start the server and allow you to interact with it using CLI.
-
 ### Testing
 
-A good MCP server should have tests. However, you don't need to test the MCP server itself, but rather the tools you implement.
+Run the test suite:
 
 ```bash
 npm run test
 ```
 
-In the case of this boilerplate, we only test the implementation of the `add` tool.
-
-### Linting
-
-Having a good linting setup reduces the friction for other developers to contribute to your project.
+### Linting and Formatting
 
 ```bash
+# Check code style
 npm run lint
-```
 
-This boilerplate uses [Prettier](https://prettier.io/), [ESLint](https://eslint.org/) and [TypeScript ESLint](https://typescript-eslint.io/) to lint the code.
-
-### Formatting
-
-Use `npm run format` to format the code.
-
-```bash
+# Fix code style issues
 npm run format
 ```
 
-### GitHub Actions
+## Usage with MCP Clients
 
-This repository has a GitHub Actions workflow that runs linting, formatting, tests, and publishes package updates to NPM using [semantic-release](https://semantic-release.gitbook.io/semantic-release/).
+### Claude Desktop
 
-In order to use this workflow, you need to:
+Add to your Claude Desktop configuration:
 
-1. Add `NPM_TOKEN` to the repository secrets
-   1. [Create a new automation token](https://www.npmjs.com/settings/punkpeye/tokens/new)
-   2. Add token as `NPM_TOKEN` environment secret (Settings → Secrets and Variables → Actions → "Manage environment secrets" → "release" → Add environment secret)
-1. Grant write access to the workflow (Settings → Actions → General → Workflow permissions → "Read and write permissions")
+```json
+{
+  "mcpServers": {
+    "eve-osint": {
+      "command": "npx",
+      "args": ["tsx", "/path/to/eve-online-osint-mcp/src/server.ts"],
+      "env": {}
+    }
+  }
+}
+```
+
+### Other MCP Clients
+
+The server uses stdio transport and can be integrated with any MCP-compatible client.
+
+## API Dependencies
+
+This server relies on two external APIs:
+
+1. **EVE Online ESI API** (`https://esi.evetech.net/`)
+
+   - Used for resolving entity names to IDs
+   - No authentication required for name resolution
+   - Official CCP Games API
+
+2. **EveWho API** (`https://evewho.com/api/`)
+   - Provides corporation and alliance membership data
+   - Rate limited to 10 requests per 30 seconds
+   - Third-party service by zKillboard
+
+## Rate Limiting
+
+The server respects EveWho's rate limiting policy:
+
+- Maximum 10 requests per 30-second window
+- Automatic error handling for rate limit violations
+- User-friendly error messages when limits are exceeded
+
+## Data Privacy and Terms
+
+- All data is sourced from publicly available APIs
+- Complies with CCP Games' Terms of Service
+- No personal or private information is accessed
+- Data is provided as-is from EveWho's database
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Run the test suite and linting
+6. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Disclaimer
+
+This tool is for educational and intelligence gathering purposes only. Users are responsible for complying with all applicable terms of service and local laws. The authors are not affiliated with CCP Games or EVE Online.

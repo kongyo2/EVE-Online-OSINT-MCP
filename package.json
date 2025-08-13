@@ -1,7 +1,7 @@
 {
-  "name": "fastmcp-boilerplate",
+  "name": "eve-online-osint-mcp",
   "version": "1.0.0",
-  "main": "dist/index.js",
+  "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
     "start": "tsx src/server.ts",
@@ -13,16 +13,19 @@
   "keywords": [
     "fastmcp",
     "mcp",
-    "boilerplate"
+    "eve-online",
+    "osint",
+    "intelligence",
+    "evewho"
   ],
   "repository": {
-    "url": "https://github.com/punkpeye/fastmcp-boilerplate"
+    "url": "https://github.com/your-username/eve-online-osint-mcp"
   },
-  "author": "Frank Fiegel <frank@glama.ai>",
-  "homepage": "https://glama.ai/mcp",
+  "author": "Your Name <your.email@example.com>",
+  "homepage": "https://github.com/your-username/eve-online-osint-mcp",
   "type": "module",
   "license": "MIT",
-  "description": "A boilerplate for FastMCP",
+  "description": "EVE Online OSINT MCP Server using EveWho API for intelligence gathering",
   "dependencies": {
     "axios": "^1.7.9",
     "fastmcp": "^1.27.3",
