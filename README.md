@@ -128,79 +128,8 @@ npm run lint
 npm run format
 ```
 
-## Usage with MCP Clients
 
-### Claude Desktop
 
-Add to your Claude Desktop configuration:
-
-```json
-{
-  "mcpServers": {
-    "eve-osint": {
-      "command": "npx",
-      "args": ["tsx", "/path/to/eve-online-osint-mcp/src/server.ts"],
-      "env": {}
-    }
-  }
-}
-```
-
-### Other MCP Clients
-
-The server uses stdio transport and can be integrated with any MCP-compatible client.
-
-## API Dependencies
-
-This server relies on three external APIs:
-
-1. **EVE Online ESI API** (`https://esi.evetech.net/`)
-
-   - Official CCP Games API for EVE Online
-   - Provides character, corporation, and alliance public information
-   - Corporation history and public character data
-   - Name resolution (names ↔ IDs)
-   - No authentication required for public endpoints
-   - Built-in rate limiting
-
-2. **EveWho API** (`https://evewho.com/api/`)
-
-   - Provides corporation and alliance membership data
-   - Historical tracking and activity metrics
-   - Rate limited to 10 requests per 30 seconds
-   - Third-party service
-
-3. **zKillboard API** (`https://zkillboard.com/api/`)
-   - Killmail and PvP statistics
-   - Character combat history and statistics
-   - Rate limiting: be reasonable with request frequency
-   - Third-party service
-
-## Rate Limiting
-
-The server respects all API rate limiting policies:
-
-- **EveWho**: Maximum 10 requests per 30-second window
-- **zKillboard**: Reasonable request frequency, no hammering
-- **ESI**: Built-in rate limiting handled automatically
-- Automatic error handling for rate limit violations
-- User-friendly error messages when limits are exceeded
-
-## Data Privacy and Terms
-
-- All data is sourced from publicly available APIs
-- Complies with CCP Games' Terms of Service
-- No personal or private information is accessed
-- Data is provided as-is from EveWho's database
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite and linting
-6. Submit a pull request
 
 ## License
 
