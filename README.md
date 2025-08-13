@@ -134,7 +134,3 @@ npm run format
 ## License
 
 MIT License - see LICENSE file for details.
-
-## Disclaimer
-
-This tool is for educational and intelligence gathering purposes only. Users are responsible for complying with all applicable terms of service and local laws. The authors are not affiliated with CCP Games or EVE Online.
