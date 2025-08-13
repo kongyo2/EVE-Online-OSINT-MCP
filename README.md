@@ -1,5 +1,7 @@
 # EVE Online OSINT MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@kongyo2/eve-online-osint-mcp)](https://smithery.ai/server/@kongyo2/eve-online-osint-mcp)
+
 An MCP (Model Context Protocol) server that provides OSINT (Open Source Intelligence) capabilities for EVE Online using multiple APIs including ESI, EveWho, and zKillboard. This server allows AI assistants to gather comprehensive intelligence on EVE Online characters, corporations, and alliances by name.
 
 ## Features
@@ -85,6 +87,14 @@ Examines EVE Online alliances by name.
 
 - Node.js 18+
 - npm or pnpm
+
+### Installing via Smithery
+
+To install eve-online-osint-mcp for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@kongyo2/eve-online-osint-mcp):
+
+```bash
+npx -y @smithery/cli install @kongyo2/eve-online-osint-mcp --client claude
+```
 
 ### Installation
 
