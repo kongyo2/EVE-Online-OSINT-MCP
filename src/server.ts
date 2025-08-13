@@ -1,6 +1,34 @@
 import { FastMCP } from "fastmcp";
 import { z } from "zod";
 
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, ms));
+
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 5,
+): Promise<Response> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const response = await fetch(url, options);
+      // 5xx server errors are worth retrying
+      if (response.status >= 500 && response.status < 600) {
+        if (i === maxRetries - 1) return response; // Return last attempt
+        const delay = Math.pow(2, i) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
+        await sleep(delay);
+        continue;
+      }
+      return response; // Not a 5xx, return response
+    } catch (error) {
+      if (i === maxRetries - 1) throw error; // Rethrow last attempt's error
+      const delay = Math.pow(2, i) * 1000 + Math.random() * 1000;
+      await sleep(delay);
+    }
+  }
+  throw new Error(`Request failed after ${maxRetries} retries.`);
+}
+
 /**
  * EVE Online OSINT MCP Server using EveWho API
  * Provides intelligence gathering capabilities for EVE Online entities
@@ -209,7 +237,7 @@ async function getAllianceCorps(
   allianceId: number,
 ): Promise<EveWhoAllianceResponse> {
   try {
-    const response = await fetch(`${EVEWHO_BASE_URL}/allilist/${allianceId}`, {
+    const response = await fetchWithRetry(`${EVEWHO_BASE_URL}/allilist/${allianceId}`, {
       headers: {
         "User-Agent": "EVE-OSINT-MCP/1.0.0",
       },
@@ -236,7 +264,7 @@ async function getCharacterInfo(
   characterId: number,
 ): Promise<EveWhoCharacterResponse> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${EVEWHO_BASE_URL}/character/${characterId}`,
       {
         headers: {
@@ -266,7 +294,7 @@ async function getCharacterKillmails(
   characterId: number,
 ): Promise<ZKillboardKillmail[]> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${ZKILLBOARD_BASE_URL}/characterID/${characterId}/`,
       {
         headers: {
@@ -298,7 +326,7 @@ async function getCharacterStats(
   characterId: number,
 ): Promise<ZKillboardStats> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${ZKILLBOARD_BASE_URL}/stats/characterID/${characterId}/`,
       {
         headers: {
@@ -329,7 +357,7 @@ async function getCorporationMembers(
   corporationId: number,
 ): Promise<EveWhoCorporationResponse> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${EVEWHO_BASE_URL}/corplist/${corporationId}`,
       {
         headers: {
@@ -359,7 +387,7 @@ async function getESIAllianceInfo(
   allianceId: number,
 ): Promise<ESIAllianceInfo> {
   try {
-    const response = await fetch(`${ESI_BASE_URL}/alliances/${allianceId}/`, {
+    const response = await fetchWithRetry(`${ESI_BASE_URL}/alliances/${allianceId}/`, {
       headers: {
         "User-Agent": "EVE-OSINT-MCP/1.0.0",
       },
@@ -386,7 +414,7 @@ async function getESICharacterCorporationHistory(
   characterId: number,
 ): Promise<ESICharacterCorporationHistory[]> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${ESI_BASE_URL}/characters/${characterId}/corporationhistory/`,
       {
         headers: {
@@ -416,7 +444,7 @@ async function getESICharacterInfo(
   characterId: number,
 ): Promise<ESICharacterInfo> {
   try {
-    const response = await fetch(`${ESI_BASE_URL}/characters/${characterId}/`, {
+    const response = await fetchWithRetry(`${ESI_BASE_URL}/characters/${characterId}/`, {
       headers: {
         "User-Agent": "EVE-OSINT-MCP/1.0.0",
       },
@@ -445,7 +473,7 @@ async function getESICorporationInfo(
   corporationId: number,
 ): Promise<ESICorporationInfo> {
   try {
-    const response = await fetch(
+    const response = await fetchWithRetry(
       `${ESI_BASE_URL}/corporations/${corporationId}/`,
       {
         headers: {
@@ -475,7 +503,7 @@ async function resolveIdsToNames(
   ids: number[],
 ): Promise<Array<{ category: string; id: number; name: string }>> {
   try {
-    const response = await fetch(`${ESI_BASE_URL}/universe/names/`, {
+    const response = await fetchWithRetry(`${ESI_BASE_URL}/universe/names/`, {
       body: JSON.stringify(ids),
       headers: {
         "Content-Type": "application/json",
@@ -507,7 +535,7 @@ async function resolveIdsToNames(
  */
 async function resolveNamesToIds(names: string[]): Promise<ESIResolveResponse> {
   try {
-    const response = await fetch(`${ESI_BASE_URL}/universe/ids/`, {
+    const response = await fetchWithRetry(`${ESI_BASE_URL}/universe/ids/`, {
       body: JSON.stringify(names),
       headers: {
         "Content-Type": "application/json",
