@@ -2,6 +2,10 @@
 
 [![smithery badge](https://smithery.ai/badge/@kongyo2/eve-online-osint-mcp)](https://smithery.ai/server/@kongyo2/eve-online-osint-mcp)
 
+<a href="https://glama.ai/mcp/servers/@kongyo2/EVE-Online-OSINT-MCP">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@kongyo2/EVE-Online-OSINT-MCP/badge" />
+</a>
+
 An MCP (Model Context Protocol) server that provides OSINT (Open Source Intelligence) capabilities for EVE Online using multiple APIs including ESI, EveWho, and zKillboard. This server allows AI assistants to gather comprehensive intelligence on EVE Online characters, corporations, and alliances by name.
 
 ## Features
